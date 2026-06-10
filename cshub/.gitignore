@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Archivos subidos por usuarios
+uploads/
+
+# Variables de entorno
+*.env
