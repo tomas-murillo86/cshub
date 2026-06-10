@@ -27,7 +27,6 @@ public class FileStorageService {
         }
 
         // Genera un nombre único para evitar colisiones
-        // UUID genera un código aleatorio como: "a3f2b1c4-..."
         String nombreOriginal = archivo.getOriginalFilename();
         String extension = nombreOriginal.substring(
                 nombreOriginal.lastIndexOf("."));
