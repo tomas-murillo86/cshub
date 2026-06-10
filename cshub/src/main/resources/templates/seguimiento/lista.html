@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Lista — CS Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-3px); }
+        .badge-PENDIENTE   { background-color: #6c757d; color: white; }
+        .badge-EN_PROGRESO { background-color: #0d6efd; color: white; }
+        .badge-COMPLETADO  { background-color: #198754; color: white; }
+        footer { background-color: #212529; color: #adb5bd; padding: 20px 0; margin-top: 60px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" th:href="@{/}">
+            <i class="bi bi-code-square"></i> CS Hub
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/recursos}">
+                        <i class="bi bi-collection"></i> Recursos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/seguimientos}">
+                        <i class="bi bi-bookmark-check"></i> Mi Lista
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="container mt-4">
+
+    <div th:if="${exito}" class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> <span th:text="${exito}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-circle"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- ENCABEZADO -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-bookmark-check"></i>
+            <span th:text="${titulo}">Mi Lista de Seguimiento</span>
+        </h2>
+        <a th:href="@{/recursos}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Agregar Recurso
+        </a>
+    </div>
+
+    <!-- FILTRO POR USUARIO -->
+    <div class="card p-3 mb-4">
+        <form th:action="@{/seguimientos/usuario}" method="get" class="row g-2">
+            <div class="col-md-8">
+                <input type="text" class="form-control" name="nombre"
+                       placeholder="Ingresa tu nombre para ver tu lista..."
+                       th:value="${usuario}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-person-check"></i> Ver mi lista
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- LISTA VACÍA -->
+    <div th:if="${#lists.isEmpty(seguimientos)}" class="text-center py-5">
+        <i class="bi bi-bookmark-x display-1 text-muted"></i>
+        <h4 class="mt-3 text-muted">No hay seguimientos aún</h4>
+        <p class="text-muted">Explora el catálogo y agrega recursos a tu lista.</p>
+        <a th:href="@{/recursos}" class="btn btn-primary mt-2">
+            <i class="bi bi-collection"></i> Ver Catálogo
+        </a>
+    </div>
+
+    <!-- TARJETAS DE SEGUIMIENTO -->
+    <div class="row row-cols-1 row-cols-md-2 g-4"
+         th:unless="${#lists.isEmpty(seguimientos)}">
+        <div class="col" th:each="s : ${seguimientos}">
+            <div class="card h-100">
+                <div class="card-body">
+
+                    <!-- Estado con color dinámico -->
+                    <div class="mb-2">
+                        <!--
+                          th:classappend → agrega una clase CSS dinámica según el estado
+                          El resultado será: "badge badge-PENDIENTE" o "badge badge-COMPLETADO"
+                        -->
+                        <span class="badge"
+                              th:classappend="'badge-' + ${s.estado}"
+                              th:text="${s.estadoNombre}">Estado</span>
+                    </div>
+
+                    <!-- Título del recurso vinculado -->
+                    <h5 class="card-title"
+                        th:text="${s.recurso.titulo}">Recurso</h5>
+
+                    <!-- Info del seguimiento -->
+                    <p class="card-text text-muted small mb-1">
+                        <i class="bi bi-person"></i>
+                        <span th:text="${s.nombreUsuario}">Usuario</span>
+                    </p>
+                    <p class="card-text text-muted small mb-1">
+                        <i class="bi bi-calendar"></i> Inicio:
+                        <span th:text="${s.fechaInicio}">Fecha</span>
+                    </p>
+                    <p class="card-text text-muted small mb-2"
+                       th:if="${s.fechaMeta}">
+                        <i class="bi bi-flag"></i> Meta:
+                        <span th:text="${s.fechaMeta}">Fecha</span>
+                    </p>
+
+                    <!-- Notas -->
+                    <p class="card-text small fst-italic text-muted"
+                       th:if="${s.notas}"
+                       th:text="${#strings.abbreviate(s.notas, 80)}">Notas</p>
+                </div>
+
+                <div class="card-footer bg-transparent">
+                    <!-- CAMBIAR ESTADO RÁPIDO -->
+                    <div class="d-flex gap-1 flex-wrap mb-2">
+                        <a th:href="@{/seguimientos/estado/{id}(id=${s.id}, estado='PENDIENTE')}"
+                           class="btn btn-sm btn-outline-secondary">
+                            Pendiente
+                        </a>
+                        <a th:href="@{/seguimientos/estado/{id}(id=${s.id}, estado='EN_PROGRESO')}"
+                           class="btn btn-sm btn-outline-primary">
+                            En Progreso
+                        </a>
+                        <a th:href="@{/seguimientos/estado/{id}(id=${s.id}, estado='COMPLETADO')}"
+                           class="btn btn-sm btn-outline-success">
+                            Completado
+                        </a>
+                    </div>
+
+                    <!-- ACCIONES -->
+                    <div class="d-flex justify-content-between">
+                        <a th:href="${s.recurso.url}" target="_blank"
+                           class="btn btn-sm btn-primary">
+                            <i class="bi bi-box-arrow-up-right"></i> Ir al recurso
+                        </a>
+                        <div>
+                            <a th:href="@{/seguimientos/editar/{id}(id=${s.id})}"
+                               class="btn btn-sm btn-outline-secondary me-1">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a th:href="@{/seguimientos/eliminar/{id}(id=${s.id})}"
+                               class="btn btn-sm btn-outline-danger"
+                               onclick="return confirm('¿Eliminar este seguimiento?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer class="text-center">
+    <div class="container">
+        <p class="mb-0">
+            <i class="bi bi-code-square"></i> CS Hub — Repositorio de Recursos para Computer Science
+        </p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

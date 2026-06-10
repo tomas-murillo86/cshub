@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recurso — CS Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        footer { background-color: #212529; color: #adb5bd; padding: 20px 0; margin-top: 60px; }
+
+        /* Estilos para el selector URL / Archivo */
+        .tipo-recurso-btn {
+            cursor: pointer;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .tipo-recurso-btn:hover { border-color: #0d6efd; }
+        .tipo-recurso-btn.activo {
+            border-color: #0d6efd;
+            background-color: #e7f1ff;
+        }
+        .tipo-recurso-btn i { font-size: 1.8rem; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" th:href="@{/}">
+            <i class="bi bi-code-square"></i> CS Hub
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/recursos}">
+                        <i class="bi bi-collection"></i> Recursos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/seguimientos}">
+                        <i class="bi bi-bookmark-check"></i> Mi Lista
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="container mt-4">
+
+    <div th:if="${error}" class="alert alert-danger">
+        <i class="bi bi-exclamation-circle"></i> <span th:text="${error}"></span>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card p-4">
+
+                <h3 class="mb-4">
+                    <i class="bi bi-plus-circle"></i>
+                    <span th:text="${titulo}">Formulario</span>
+                </h3>
+
+                <form th:action="@{/recursos/guardar}"
+                      th:object="${recurso}"
+                      method="post"
+                      enctype="multipart/form-data">
+
+                    <input type="hidden" th:field="*{id}">
+                    <input type="hidden" th:field="*{archivoNombre}">
+                    <input type="hidden" th:field="*{archivoRuta}">
+
+                    <!-- TÍTULO -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            Título <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control"
+                               th:field="*{titulo}"
+                               placeholder="Ej: CS50 — Introduction to Computer Science"
+                               required>
+                    </div>
+
+                    <!-- DESCRIPCIÓN -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Descripción</label>
+                        <textarea class="form-control" th:field="*{descripcion}"
+                                  rows="3"
+                                  placeholder="Describe brevemente de qué trata este recurso..."></textarea>
+                    </div>
+
+                    <!-- ── SELECTOR URL O ARCHIVO ─────────────────────── -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            Tipo de contenido <span class="text-danger">*</span>
+                        </label>
+
+                        <div class="row g-2 mb-3">
+                            <!--
+                              Al hacer clic en cada opción, JavaScript muestra
+                              el campo correspondiente y oculta el otro.
+                            -->
+                            <div class="col-6">
+                                <div class="tipo-recurso-btn"
+                                     id="btn-url"
+                                     onclick="seleccionarTipo('url')">
+                                    <i class="bi bi-link-45deg text-primary"></i>
+                                    <p class="mb-0 mt-1 fw-bold">Enlace URL</p>
+                                    <small class="text-muted">
+                                        YouTube, sitio web, curso online...
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="tipo-recurso-btn"
+                                     id="btn-archivo"
+                                     onclick="seleccionarTipo('archivo')">
+                                    <i class="bi bi-file-earmark-arrow-up text-success"></i>
+                                    <p class="mb-0 mt-1 fw-bold">Subir Archivo</p>
+                                    <small class="text-muted">
+                                        PDF, DOCX, PPTX — máx. 20MB
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CAMPO URL — visible por defecto -->
+                        <div id="campo-url">
+                            <label class="form-label fw-bold">URL</label>
+                            <input type="url" class="form-control"
+                                   th:field="*{url}"
+                                   id="input-url"
+                                   placeholder="https://ejemplo.com/recurso">
+                        </div>
+
+                        <!-- CAMPO ARCHIVO — oculto por defecto -->
+                        <div id="campo-archivo" style="display:none;">
+                            <label class="form-label fw-bold">Archivo</label>
+
+                            <!-- Muestra el archivo actual si ya tiene uno -->
+                            <div th:if="${recurso.tieneArchivo()}" class="mb-2">
+                                <span class="badge bg-success">
+                                    <i class="bi bi-file-check"></i>
+                                    Archivo actual:
+                                    <span th:text="${recurso.archivoNombre}"></span>
+                                </span>
+                                <small class="text-muted ms-2">
+                                    Sube uno nuevo para reemplazarlo
+                                </small>
+                            </div>
+
+                            <input type="file" class="form-control"
+                                   name="archivo"
+                                   id="input-archivo"
+                                   accept=".pdf,.docx,.pptx">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- TIPO -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">
+                                Tipo <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" th:field="*{tipo}" required>
+                                <option value="">Selecciona...</option>
+                                <option th:each="t : ${tipos}"
+                                        th:value="${t}"
+                                        th:text="${t.nombre}">Tipo</option>
+                            </select>
+                        </div>
+
+                        <!-- TEMA -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">
+                                Tema <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" th:field="*{tema}" required>
+                                <option value="">Selecciona...</option>
+                                <option th:each="t : ${temas}"
+                                        th:value="${t}"
+                                        th:text="${t.nombre}">Tema</option>
+                            </select>
+                        </div>
+
+                        <!-- NIVEL -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">
+                                Nivel <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" th:field="*{nivel}" required>
+                                <option value="">Selecciona...</option>
+                                <option th:each="n : ${niveles}"
+                                        th:value="${n}"
+                                        th:text="${n.nombre}">Nivel</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- IDIOMA -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label fw-bold">Idioma</label>
+                            <input type="text" class="form-control"
+                                   th:field="*{idioma}"
+                                   placeholder="Español / Inglés">
+                        </div>
+
+                        <!-- FUENTE -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label fw-bold">Fuente</label>
+                            <input type="text" class="form-control"
+                                   th:field="*{fuente}"
+                                   placeholder="Harvard, freeCodeCamp...">
+                        </div>
+
+                        <!-- GRATUITO -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label fw-bold">¿Es gratuito?</label>
+                            <select class="form-select" th:field="*{gratuito}">
+                                <option value="true">Sí, es gratuito</option>
+                                <option value="false">No, es de pago</option>
+                            </select>
+                        </div>
+
+                        <!-- ES UDEA -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label fw-bold">¿Es de la UdeA?</label>
+                            <select class="form-select" th:field="*{esUdeA}">
+                                <option value="false">No</option>
+                                <option value="true">Sí, es de la UdeA</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <a th:href="@{/recursos}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer class="text-center">
+    <div class="container">
+        <p class="mb-0">
+            <i class="bi bi-code-square"></i> CS Hub — Repositorio de Recursos para Computer Science
+        </p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Función que muestra/oculta los campos según la selección
+    function seleccionarTipo(tipo) {
+        const campoUrl     = document.getElementById('campo-url');
+        const campoArchivo = document.getElementById('campo-archivo');
+        const btnUrl       = document.getElementById('btn-url');
+        const btnArchivo   = document.getElementById('btn-archivo');
+        const inputUrl     = document.getElementById('input-url');
+
+        if (tipo === 'url') {
+            // Mostrar URL, ocultar archivo
+            campoUrl.style.display     = 'block';
+            campoArchivo.style.display = 'none';
+            btnUrl.classList.add('activo');
+            btnArchivo.classList.remove('activo');
+            inputUrl.required = true;
+        } else {
+            // Mostrar archivo, ocultar URL
+            campoUrl.style.display     = 'none';
+            campoArchivo.style.display = 'block';
+            btnUrl.classList.remove('activo');
+            btnArchivo.classList.add('activo');
+            inputUrl.required = false;
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', function () {
+        const tieneArchivo = /*[[${recurso.tieneArchivo()}]]*/ false;
+        const tieneUrl     = /*[[${recurso.url != null && !#strings.isEmpty(recurso.url)}]]*/ false;
+
+        if (tieneArchivo && !tieneUrl) {
+            seleccionarTipo('archivo');
+        } else {
+            seleccionarTipo('url');
+        }
+    });
+</script>
+</body>
+</html>

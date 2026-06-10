@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle — CS Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .badge-gratuito { background-color: #198754; color: white; }
+        .badge-pago { background-color: #dc3545; color: white; }
+        footer { background-color: #212529; color: #adb5bd; padding: 20px 0; margin-top: 60px; }
+        .btn-acceder { font-size: 1.1rem; padding: 12px 30px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" th:href="@{/}">
+            <i class="bi bi-code-square"></i> CS Hub
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/recursos}">
+                        <i class="bi bi-collection"></i> Recursos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/seguimientos}">
+                        <i class="bi bi-bookmark-check"></i> Mi Lista
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="container mt-4">
+
+    <div th:if="${exito}" class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> <span th:text="${exito}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- BREADCRUMB -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/}">Inicio</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a th:href="@{/recursos}">Recursos</a>
+            </li>
+            <li class="breadcrumb-item active" th:text="${recurso.titulo}">Detalle</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- COLUMNA PRINCIPAL -->
+        <div class="col-md-8">
+            <div class="card p-4 mb-4">
+
+                <!-- Badges -->
+                <div class="mb-3">
+                    <span class="badge bg-primary me-1"
+                          th:text="${recurso.tipoNombre}">Tipo</span>
+                    <span class="badge bg-secondary me-1"
+                          th:text="${recurso.nivelNombre}">Nivel</span>
+                    <span class="badge bg-info me-1"
+                          th:text="${recurso.temaNombre}">Tema</span>
+                    <span th:if="${recurso.gratuito}"
+                          class="badge badge-gratuito me-1">✓ Gratuito</span>
+                    <span th:unless="${recurso.gratuito}"
+                          class="badge badge-pago me-1">De pago</span>
+                    <span th:if="${recurso.esUdeA}"
+                          class="badge bg-warning text-dark me-1">
+                        <i class="bi bi-mortarboard"></i> UdeA
+                    </span>
+                </div>
+
+                <!-- Título -->
+                <h2 class="fw-bold mb-2" th:text="${recurso.titulo}">Título</h2>
+
+                <!-- Fuente e idioma -->
+                <p class="text-muted mb-3">
+                    <i class="bi bi-person"></i>
+                    <span th:text="${recurso.fuente}">Fuente</span>
+                    <span th:if="${recurso.idioma}" class="ms-3">
+                        <i class="bi bi-translate"></i>
+                        <span th:text="${recurso.idioma}">Idioma</span>
+                    </span>
+                </p>
+
+                <!-- Descripción -->
+                <p class="lead" th:text="${recurso.descripcion}">Descripción</p>
+
+                <!-- Botón principal para acceder al recurso -->
+                <a th:href="${recurso.url}" target="_blank"
+                   class="btn btn-primary btn-acceder mt-2">
+                    <i class="bi bi-box-arrow-up-right"></i> Acceder al Recurso
+                </a>
+                <!-- Botón de descarga — solo aparece si el recurso tiene archivo -->
+                <a th:if="${recurso.tieneArchivo()}"
+                th:href="@{/recursos/descargar/{id}(id=${recurso.id})}"
+                class="btn btn-outline-success btn-acceder mt-2 ms-2">
+                    <i class="bi bi-download"></i>
+                    Descargar <span th:text="${recurso.archivoNombre}">Archivo</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- COLUMNA LATERAL -->
+        <div class="col-md-4">
+
+            <!-- AGREGAR A MI LISTA -->
+            <div class="card p-4 mb-3">
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-bookmark-plus"></i> Agregar a Mi Lista
+                </h5>
+                <p class="text-muted small">
+                    Registra tu seguimiento de este recurso y lleva el control de tu progreso.
+                </p>
+                <!--
+                  Al hacer clic pasa el recursoId en la URL
+                  para precargar el recurso en el formulario de seguimiento
+                -->
+                <a th:href="@{/seguimientos/nuevo(recursoId=${recurso.id})}"
+                   class="btn btn-success w-100">
+                    <i class="bi bi-plus-circle"></i> Agregar a Mi Lista
+                </a>
+            </div>
+
+            <!-- ACCIONES ADMIN -->
+            <div class="card p-4">
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-gear"></i> Acciones
+                </h5>
+                <div class="d-grid gap-2">
+                    <a th:href="@{/recursos/editar/{id}(id=${recurso.id})}"
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> Editar Recurso
+                    </a>
+                    <a th:href="@{/recursos/eliminar/{id}(id=${recurso.id})}"
+                       class="btn btn-outline-danger"
+                       onclick="return confirm('¿Estás seguro de eliminar este recurso?')">
+                        <i class="bi bi-trash"></i> Eliminar Recurso
+                    </a>
+                    <a th:href="@{/recursos}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left"></i> Volver al Catálogo
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</main>
+
+<footer class="text-center">
+    <div class="container">
+        <p class="mb-0">
+            <i class="bi bi-code-square"></i> CS Hub — Repositorio de Recursos para Computer Science
+        </p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
